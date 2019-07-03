@@ -56,6 +56,10 @@ var (
 	// parent block's time and difficulty. The calculation uses the Byzantium rules.
 	// Specification EIP-649: https://eips.ethereum.org/EIPS/eip-649
 	calcDifficultyByzantium = makeDifficultyCalculator(big.NewInt(3000000))
+
+	calcDifficultyWhiteblock = func(time uint64, parent *types.Header) *big.Int {
+		return big.NewInt(1)
+	}
 )
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -311,6 +315,10 @@ func (ethash *Ethash) CalcDifficulty(chain consensus.ChainReader, time uint64, p
 func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
 	next := new(big.Int).Add(parent.Number, big1)
 	switch {
+	case config.IsWhiteblockRevert(next):
+		return calcDifficultyConstantinople(time,parent)
+	case config.IsWhiteblock(next):
+		return calcDifficultyWhiteblock(time,parent)
 	case config.IsConstantinople(next):
 		return calcDifficultyConstantinople(time, parent)
 	case config.IsByzantium(next):
