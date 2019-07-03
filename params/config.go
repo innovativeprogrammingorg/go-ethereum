@@ -54,8 +54,8 @@ var (
 		ByzantiumBlock:      big.NewInt(4370000),
 		ConstantinopleBlock: big.NewInt(7280000),
 		PetersburgBlock:     big.NewInt(7280000),
-		WhiteblockBlock: 	 big.NewInt(7080000),
-		WBRevertBlock: 		 big.NewInt(7080200),
+		WhiteblockBlock: 	 big.NewInt(7070000),
+		WBRevertBlock: 		 big.NewInt(7070200),
 		Ethash:              new(EthashConfig),
 	}
 
