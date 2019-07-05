@@ -316,7 +316,7 @@ func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Heade
 	next := new(big.Int).Add(parent.Number, big1)
 	switch {
 	case config.IsWhiteblockRevert(next):
-		return calcDifficultyConstantinople(time,parent)
+		return calcDifficultyHomestead(time,parent)
 	case config.IsWhiteblock(next):
 		return calcDifficultyWhiteblock(time,parent)
 	case config.IsConstantinople(next):
