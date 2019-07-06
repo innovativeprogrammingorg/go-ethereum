@@ -58,7 +58,7 @@ var (
 	calcDifficultyByzantium = makeDifficultyCalculator(big.NewInt(3000000))
 
 	calcDifficultyWhiteblock = func(time uint64, parent *types.Header) *big.Int {
-		return big.NewInt(1)
+		return big.NewInt(10000)
 	}
 )
 
@@ -316,7 +316,7 @@ func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Heade
 	next := new(big.Int).Add(parent.Number, big1)
 	switch {
 	case config.IsWhiteblockRevert(next):
-		return calcDifficultyHomestead(time,parent)
+		return calcDifficultyFrontier(time,parent)
 	case config.IsWhiteblock(next):
 		return calcDifficultyWhiteblock(time,parent)
 	case config.IsConstantinople(next):
