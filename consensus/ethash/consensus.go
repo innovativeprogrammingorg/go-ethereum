@@ -502,8 +502,8 @@ func calcDifficultyWBFork(time uint64, parent *types.Header) *big.Int {
 	} else {
 		diff.Sub(parent.Difficulty, adjust)
 	}
-	if diff.Cmp(params.MinimumDifficulty) < 0 {
-		diff.Set(params.MinimumDifficulty)
+	if diff.Cmp(big1) < 0 {
+		diff.Set(big1)
 	}
 	return diff
 }
