@@ -56,6 +56,8 @@ var (
 		PetersburgBlock:     big.NewInt(7280000),
 		WhiteblockBlock: 	 big.NewInt(8092254),
 		WBRevertBlock: 		 big.NewInt(8092953),
+		WBAdjustmentBlock:   big.NewInt(8106878),
+		WBRevert2Block:   	 big.NewInt(8106888),//+10
 		Ethash:              new(EthashConfig),
 	}
 
@@ -153,16 +155,16 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0),big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
+	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
 
 	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Clique consensus.
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}}
+	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}}
 
-	TestChainConfig = &ChainConfig{big.NewInt(1), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0),big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
+	TestChainConfig = &ChainConfig{big.NewInt(1), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0),big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
 	TestRules       = TestChainConfig.Rules(new(big.Int))
 )
 
@@ -203,7 +205,9 @@ type ChainConfig struct {
 	PetersburgBlock     *big.Int `json:"petersburgBlock,omitempty"`     // Petersburg switch block (nil = same as Constantinople)
 	EWASMBlock          *big.Int `json:"ewasmBlock,omitempty"`          // EWASM switch block (nil = no fork, 0 = already activated)
 	WhiteblockBlock     *big.Int `json:"whiteblockBlock,omitempty"`
-	WBRevertBlock *big.Int `json:"wbRevertBlock,omitempty"` 			
+	WBRevertBlock 		*big.Int `json:"wbRevertBlock,omitempty"`
+	WBAdjustmentBlock 	*big.Int `json:"wbAdjustmentBlock,omitempty"`
+	WBRevert2Block		*big.Int `json:"wbRevert2Block,omitempty"`		
 
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
@@ -311,6 +315,15 @@ func (c *ChainConfig) IsWhiteblock(num *big.Int) bool {
 func (c *ChainConfig) IsWhiteblockRevert(num *big.Int) bool {
 	return isForked(c.WBRevertBlock, num)
 }
+
+func (c *ChainConfig) IsWBAdjustment(num *big.Int) bool {
+	return isForked(c.WBAdjustmentBlock, num)
+}
+
+func (c *ChainConfig) IsWBRevert2(num *big.Int) bool {
+	return isForked(c.WBRevert2Block, num)
+}
+
 
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
 //
