@@ -136,8 +136,6 @@ type TxPoolConfig struct {
 	AccountQueue uint64 // Maximum number of non-executable transaction slots permitted per account
 	GlobalQueue  uint64 // Maximum number of non-executable transaction slots for all accounts
 
-	TotalPoolSizeLimit common.StorageSize // Limit on the total size of transactions in the pool.
-
 	Lifetime time.Duration // Maximum amount of time non-executable transaction are queued
 }
 
@@ -154,9 +152,6 @@ var DefaultTxPoolConfig = TxPoolConfig{
 	GlobalSlots:  4096,
 	AccountQueue: 64,
 	GlobalQueue:  1024,
-
-	// Default 160MB total tx size limit
-	TotalPoolSizeLimit: common.StorageSize(160*1024*1024),
 
 	Lifetime: 3 * time.Hour,
 }
@@ -606,8 +601,8 @@ func (pool *TxPool) local() map[common.Address]types.Transactions {
 // validateTx checks whether a transaction is valid according to the consensus
 // rules and adheres to some heuristic limits of the local node (price and size).
 func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
-	// Heuristic limit, reject transactions over 120KB to prevent DOS attacks
-	if tx.Size() > 120*1024 {
+	// Heuristic limit, reject transactions over 32KB to prevent DOS attacks
+	if tx.Size() > 32*1024 {
 		return ErrOversizedData
 	}
 	// Transactions can't be negative. This may never happen using RLP decoded
@@ -685,29 +680,6 @@ func (pool *TxPool) add(tx *types.Transaction, local bool) (bool, error) {
 			pool.removeTx(tx.Hash(), false)
 		}
 	}
-	// If there isn't enough free size in pool, discard underpriced transactions
-	if pool.all.TotalSize() + tx.Size() > pool.config.TotalPoolSizeLimit {
-		sizeToFree := pool.all.TotalSize() + tx.Size() - pool.config.TotalPoolSizeLimit
-		drop, freedSize := pool.priced.FreeSize(sizeToFree, tx.GasPrice(), local, pool.locals)
-		totalFreeSize := pool.config.TotalPoolSizeLimit - pool.all.TotalSize() + freedSize
-		if(totalFreeSize < tx.Size()){
-			log.Trace("Discarding underpriced transaction", "hash", hash, "price", tx.GasPrice())
-			underpricedTxCounter.Inc(1)
-
-			// Bring back freed transactions
-			for _, tx := range drop {
-				pool.priced.Put(tx)
-			}
-			return false, ErrUnderpriced
-		}
-		// New transaction is better than our worse ones, make room for it
-		for _, tx := range drop {
-			log.Trace("Discarding freshly underpriced transaction", "hash", tx.Hash(), "price", tx.GasPrice())
-			underpricedTxCounter.Inc(1)
-			pool.removeTx(tx.Hash(), false)
-		}
-	}
-
 	// If the transaction is replacing an already pending one, do directly
 	from, _ := types.Sender(pool.signer, tx) // already validated
 	if list := pool.pending[from]; list != nil && list.Overlaps(tx) {
@@ -1282,7 +1254,6 @@ func (as *accountSet) flatten() []common.Address {
 type txLookup struct {
 	all  map[common.Hash]*types.Transaction
 	lock sync.RWMutex
-	totalSize common.StorageSize
 }
 
 // newTxLookup returns a new txLookup structure.
@@ -1320,20 +1291,11 @@ func (t *txLookup) Count() int {
 	return len(t.all)
 }
 
-// TotalSize returns the sum of transaction sizes in the lookup.
-func (t *txLookup) TotalSize() common.StorageSize {
-	t.lock.RLock()
-	defer t.lock.RUnlock()
-
-	return t.totalSize
-}
-
 // Add adds a transaction to the lookup.
 func (t *txLookup) Add(tx *types.Transaction) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	t.totalSize += tx.Size()
 	t.all[tx.Hash()] = tx
 }
 
@@ -1342,6 +1304,5 @@ func (t *txLookup) Remove(hash common.Hash) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	t.totalSize -= t.all[hash].Size()
 	delete(t.all, hash)
 }

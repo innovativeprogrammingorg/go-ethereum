@@ -466,43 +466,6 @@ func (l *txPricedList) Cap(threshold *big.Int, local *accountSet) types.Transact
 	return drop
 }
 
-// FreeSize drops transactions that sum up to at least a certain total size.
-func (l *txPricedList) FreeSize(sizeToFree common.StorageSize, threshold *big.Int, local bool, locals *accountSet) (types.Transactions, common.StorageSize) {
-	drop := make(types.Transactions, 0, 128) // Remote underpriced transactions to drop
-	save := make(types.Transactions, 0, 64)  // Local underpriced transactions to keep
-	totalSize := common.StorageSize(0)
-
-	for len(*l.items) > 0 {
-		// Discard stale transactions if found during cleanup
-		tx := heap.Pop(l.items).(*types.Transaction)
-		if l.all.Get(tx.Hash()) == nil {
-			l.stales--
-			continue
-		}
-		// Stop the discards if we've reached the threshold
-		if !local && tx.GasPrice().Cmp(threshold) >= 0 {
-			save = append(save, tx)
-			break
-		}
-		// Keep local
-		if locals.containsTx(tx) {
-			save = append(save, tx)
-			continue
-		}
-		// Non stale transaction found
-		drop = append(drop, tx)
-		totalSize += tx.Size()
-		// Stop the discards if we've reached the required size
-		if totalSize >= sizeToFree {
-			break
-		}
-	}
-	for _, tx := range save {
-		heap.Push(l.items, tx)
-	}
-	return drop, totalSize
-}
-
 // Underpriced checks whether a transaction is cheaper than (or as cheap as) the
 // lowest priced transaction currently being tracked.
 func (l *txPricedList) Underpriced(tx *types.Transaction, local *accountSet) bool {
