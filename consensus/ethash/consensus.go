@@ -60,6 +60,10 @@ var (
 	calcDifficultyWhiteblock = func(time uint64, parent *types.Header) *big.Int {
 		return big.NewInt(10000)
 	}
+
+	calcDifficultyWBAdjustment = func(time uint64, parent *types.Header) *big.Int {
+		return big.NewInt(11000000)
+	}
 )
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -315,6 +319,10 @@ func (ethash *Ethash) CalcDifficulty(chain consensus.ChainReader, time uint64, p
 func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
 	next := new(big.Int).Add(parent.Number, big1)
 	switch {
+	case config.IsWBRevert2(next):
+		return calcDifficultyWBFork(time,parent)
+	case config.IsWBAdjustment(next):
+		return calcDifficultyWBAdjustment(time,parent)
 	case config.IsWhiteblockRevert(next):
 		return calcDifficultyWBFork(time,parent)
 	case config.IsWhiteblock(next):
