@@ -62,7 +62,7 @@ var (
 	}
 
 	calcDifficultyWBAdjustment = func(time uint64, parent *types.Header) *big.Int {
-		return big.NewInt(9300000)
+		return big.NewInt(11000000)
 	}
 )
 

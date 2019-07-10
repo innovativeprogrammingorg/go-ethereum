@@ -56,8 +56,8 @@ var (
 		PetersburgBlock:     big.NewInt(7280000),
 		WhiteblockBlock: 	 big.NewInt(8092254),
 		WBRevertBlock: 		 big.NewInt(8092953),
-		WBAdjustmentBlock:   big.NewInt(8106878),
-		WBRevert2Block:   	 big.NewInt(8106888),//+10
+		WBAdjustmentBlock:   big.NewInt(8106931),
+		WBRevert2Block:   	 big.NewInt(8106941),//+10
 		Ethash:              new(EthashConfig),
 	}
 
